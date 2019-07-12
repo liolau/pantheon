@@ -61,8 +61,11 @@ def parse_plot():
         '--no-graphs', action='store_true', help='only append datalink '
         'statistics to stats files with no graphs generated')
 
+    parser.add_argument(
+        '--custom-test', action='store_true', help='ignore cc name check for use with multi cc tests')
+
     args = parser.parse_args()
-    if args.schemes is not None:
+    if args.schemes is not None and not args.custom_test:
         verify_schemes(args.schemes)
 
     return args

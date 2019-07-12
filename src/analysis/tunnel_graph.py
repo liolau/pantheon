@@ -7,17 +7,19 @@ import itertools
 import numpy as np
 import matplotlib_agg
 import matplotlib.pyplot as plt
+import numpy as np
 
 import arg_parser
 
 
 class TunnelGraph(object):
     def __init__(self, tunnel_log, throughput_graph=None, delay_graph=None,
-                 ms_per_bin=500):
+                 ms_per_bin=500, flow_info=None):
         self.tunnel_log = tunnel_log
         self.throughput_graph = throughput_graph
         self.delay_graph = delay_graph
         self.ms_per_bin = ms_per_bin
+        self.flow_info = flow_info
 
     def ms_to_bin(self, ts, first_ts):
         return int((ts - first_ts) / self.ms_per_bin)
@@ -214,7 +216,7 @@ class TunnelGraph(object):
                 for bin_id in xrange(min(egress_bins), max(egress_bins) + 1):
                     self.egress_tput[flow_id].append(
                         departures[flow_id].get(bin_id, 0) / us_per_bin)
-                    self.egress_t[flow_id].append(self.bin_to_s(bin_id + 1))
+                    self.egress_t[flow_id].append(self.bin_to_s(bin_id + 1))          
 
             # calculate 95th percentile per-packet one-way delay
             self.percentile_delay[flow_id] = None
@@ -232,6 +234,16 @@ class TunnelGraph(object):
                 if flow_arrivals > 0:
                     self.loss_rate[flow_id] = (
                         1 - 1.0 * flow_departures / flow_arrivals)
+
+        egress_times = [f.keys() for f in departures.values()]
+        first_egress = min(min(egress_times))
+        last_egress = max(max(egress_times))
+        self.total_egress_tput = []
+        self.total_egress_t = []
+        for bin_id in xrange(first_egress, last_egress + 1):
+            self.total_egress_tput.append(
+                sum([f.get(bin_id, 0) for f in departures.values()]) / us_per_bin)
+            self.total_egress_t.append(self.bin_to_s(bin_id + 1))  
 
         self.total_loss_rate = None
         if total_arrivals > 0:
@@ -252,6 +264,44 @@ class TunnelGraph(object):
             self.total_percentile_delay = np.percentile(
                 total_delays, 95, interpolation='nearest')
 
+        fairness_start_bin = self.ms_to_bin(max(first_departure.values()), first_ts)+1
+        fairness_end_bin = self.ms_to_bin(min(last_arrival.values()), first_ts)-1
+        self.fairness_binIds = list(range(fairness_start_bin, fairness_end_bin+1))
+        self.fairnesses = []
+        self.group_fairnesses = []
+        totals = {k:0 for k in departures.keys()}
+        group_totals = {}     
+        for binId in self.fairness_binIds:
+            values = []
+            group_values = {}
+            for flowId in self.flows:
+                v = departures[flowId].get(binId, None)
+                if not v is None:
+                    values.append(v)
+                    group_id = self.flow_info[flowId]['group']
+                    group_values[group_id] = group_values.get(group_id, 0)+v
+                    totals[flowId] += v
+                    group_totals[group_id] = group_totals.get(group_id, 0)+v
+
+            self.fairnesses.append(self.jain_fairness(values) if values and sum(values) > 0 else None)
+            self.group_fairnesses.append(self.jain_fairness(group_values.values()) if sum(group_values.values()) > 0 else None)
+
+        self.fairness_t = [self.bin_to_s(b+1) for b in self.fairness_binIds]
+        
+        max_fairness_bin = self.fairnesses.index(max(self.fairnesses))
+        #time to max fairness, from start of fairness measurement
+        self.time_to_max_fairness = self.bin_to_s(max_fairness_bin)
+        self.throughput_relative_standard_deviation = {flowId:np.std(departures[flowId].values())/np.mean(departures[flowId].values()) for flowId in departures}
+        self.interval_fairness = np.mean(self.fairnesses[max_fairness_bin:])
+        self.overall_fairness = self.jain_fairness(totals.values())
+        self.group_interval_fairness = np.mean(self.group_fairnesses[max_fairness_bin:])
+        self.group_overall_fairness = self.jain_fairness(group_totals.values())
+        
+ 
+
+    def jain_fairness(self, values):
+        return sum(values)**2.0/sum(map(lambda x: x**2.0, values))/len(values)
+
     def flip(self, items, ncol):
         return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
 
@@ -268,24 +318,45 @@ class TunnelGraph(object):
         color_i = 0
         for flow_id in self.flows:
             color = colors[color_i]
+            name = 'Flow %s' % flow_id
+            if self.flow_info and flow_id in self.flow_info:
+                flow_info = self.flow_info[flow_id]
+                if flow_info['color']: color = flow_info['color']
+                if flow_info['name']: name = flow_info['name']
 
             if flow_id in self.ingress_tput and flow_id in self.ingress_t:
                 empty_graph = False
                 ax.plot(self.ingress_t[flow_id], self.ingress_tput[flow_id],
-                        label='Flow %s ingress (mean %.2f Mbit/s)'
-                        % (flow_id, self.avg_ingress.get(flow_id, 0)),
+                        label='%s ingress (mean %.2f Mbit/s)'
+                        % (name, self.avg_ingress.get(flow_id, 0)),
                         color=color, linestyle='dashed')
 
             if flow_id in self.egress_tput and flow_id in self.egress_t:
                 empty_graph = False
                 ax.plot(self.egress_t[flow_id], self.egress_tput[flow_id],
-                        label='Flow %s egress (mean %.2f Mbit/s)'
-                        % (flow_id, self.avg_egress.get(flow_id, 0)),
+                        label='%s egress (mean %.2f Mbit/s)'
+                        % (name, self.avg_egress.get(flow_id, 0)),
                         color=color)
 
             color_i += 1
             if color_i == len(colors):
                 color_i = 0
+
+        ax.plot(self.total_egress_t, self.total_egress_tput,
+                label='Total egress egress (mean %.2f Mbit/s)'
+                % (sum(self.total_egress_tput) / len(self.total_egress_tput)),
+                color="gray")        
+
+        ax2 = ax.twinx()
+
+        ax2.plot(self.fairness_t, self.fairnesses,
+                label='Jain Fairness',
+                color='black')
+
+        print(self.group_fairnesses)
+        ax2.plot(self.fairness_t, self.group_fairnesses,
+                label='group Jain Fairness',
+                color='0.8')
 
         if empty_graph:
             sys.stderr.write('No valid throughput graph is generated\n')
@@ -293,14 +364,15 @@ class TunnelGraph(object):
 
         ax.set_xlabel('Time (s)', fontsize=12)
         ax.set_ylabel('Throughput (Mbit/s)', fontsize=12)
-
+        ax2.set_ylabel('Jain Fairness', fontsize=12)
         if self.link_capacity and self.avg_capacity:
             ax.set_title('Average capacity %.2f Mbit/s (shaded region)'
                          % self.avg_capacity)
 
         ax.grid()
         handles, labels = ax.get_legend_handles_labels()
-        lgd = ax.legend(self.flip(handles, 2), self.flip(labels, 2),
+        handles2, labels2 = ax2.get_legend_handles_labels()
+        lgd = ax.legend(self.flip(handles + handles2, 2), self.flip(labels + labels2, 2),
                         scatterpoints=1, bbox_to_anchor=(0.5, -0.1),
                         loc='upper center', ncol=2, fontsize=12)
 
@@ -315,16 +387,22 @@ class TunnelGraph(object):
         max_delay = 0
         colors = ['b', 'g', 'r', 'y', 'c', 'm']
         color_i = 0
+
         for flow_id in self.flows:
             color = colors[color_i]
+            name = 'Flow %s' % flow_id
+            if self.flow_info and flow_id in self.flow_info:
+                flow_info = self.flow_info[flow_id]
+                if flow_info['color']: color = flow_info['color']
+                if flow_info['name']: name = flow_info['name']
             if flow_id in self.delays and flow_id in self.delays_t:
                 empty_graph = False
                 max_delay = max(max_delay, max(self.delays_t[flow_id]))
 
                 ax.scatter(self.delays_t[flow_id], self.delays[flow_id], s=1,
                            color=color, marker='.',
-                           label='Flow %s (95th percentile %.2f ms)'
-                           % (flow_id, self.percentile_delay.get(flow_id, 0)))
+                           label='%s (95th percentile %.2f ms)'
+                           % (name, self.percentile_delay.get(flow_id, 0)))
 
                 color_i += 1
                 if color_i == len(colors):
@@ -410,6 +488,12 @@ class TunnelGraph(object):
         tunnel_results['loss'] = self.total_loss_rate
         tunnel_results['duration'] = self.total_duration
         tunnel_results['stats'] = self.statistics_string()
+        tunnel_results['time_to_max_fairness'] = self.time_to_max_fairness
+        tunnel_results['throughput_relative_standard_deviation'] = self.throughput_relative_standard_deviation
+        tunnel_results['interval_fairness'] = self.interval_fairness
+        tunnel_results['overall_fairness'] = self.overall_fairness
+        tunnel_results['group_interval_fairness'] = self.group_interval_fairness
+        tunnel_results['group_overall_fairness'] = self.group_overall_fairness
 
         flow_data = {}
         flow_data['all'] = {}
@@ -417,14 +501,21 @@ class TunnelGraph(object):
         flow_data['all']['delay'] = self.total_percentile_delay
         flow_data['all']['loss'] = self.total_loss_rate
 
+        group_data = {}
+
         for flow_id in self.flows:
             if flow_id != 0:
                 flow_data[flow_id] = {}
                 flow_data[flow_id]['tput'] = self.avg_egress[flow_id]
                 flow_data[flow_id]['delay'] = self.percentile_delay[flow_id]
                 flow_data[flow_id]['loss'] = self.loss_rate[flow_id]
+                group_id = self.flow_info[flowId]['group']
+                if not group_id in group_data:
+                    group_data[group_id] = {k:0 for k in ['tput']}
+                group_data[group_id]['tput']+= self.avg_egress[flow_id]
 
         tunnel_results['flow_data'] = flow_data
+        tunnel_results['group_data'] = group_data
 
         return tunnel_results
 

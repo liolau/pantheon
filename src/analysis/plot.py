@@ -16,16 +16,24 @@ import tunnel_graph
 import context
 from helpers import utils
 
+from traceback import format_exc
 
 class Plot(object):
-    def __init__(self, args):
+    def __init__(self, args, flow_info = None):
+        #flow_info -- optional mapping int:flowid -> (str:color, str:name)
         self.data_dir = path.abspath(args.data_dir)
         self.include_acklink = args.include_acklink
         self.no_graphs = args.no_graphs
+        self.custom_test = args.custom_test
+        self.flow_info = flow_info
 
         metadata_path = path.join(self.data_dir, 'pantheon_metadata.json')
         meta = utils.load_test_metadata(metadata_path)
-        self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
+        
+        if self.custom_test:
+            self.cc_schemes = args.schemes.split()
+        else:
+            self.cc_schemes = utils.verify_schemes_with_meta(args.schemes, meta)
 
         self.run_times = meta['run_times']
         self.flows = meta['flows']
@@ -102,9 +110,10 @@ class Plot(object):
                 tunnel_results = tunnel_graph.TunnelGraph(
                     tunnel_log=log_path,
                     throughput_graph=tput_graph_path,
-                    delay_graph=delay_graph_path).run()
+                    delay_graph=delay_graph_path,
+                    flow_info = self.flow_info).run()
             except Exception as exception:
-                sys.stderr.write('Error: %s\n' % exception)
+                sys.stderr.write('Error: %s\n' % format_exc())
                 sys.stderr.write('Warning: "tunnel_graph %s" failed but '
                                  'continued to run.\n' % log_path)
                 error = True
@@ -193,6 +202,7 @@ class Plot(object):
         sys.stderr.write('Appended datalink statistics to stats files in %s\n'
                          % self.data_dir)
 
+        self.perf_data = perf_data
         return perf_data, stats
 
     def xaxis_log_scale(self, ax, min_delay, max_delay):
@@ -246,9 +256,14 @@ class Plot(object):
                 continue
 
             value = data[cc]
-            cc_name = schemes_config[cc]['name']
-            color = schemes_config[cc]['color']
-            marker = schemes_config[cc]['marker']
+            if self.custom_test:
+                cc_name = cc
+                color = 'green'
+                marker = '*'
+            else:
+                cc_name = schemes_config[cc]['name']
+                color = schemes_config[cc]['color']
+                marker = schemes_config[cc]['marker']
             y_data, x_data = zip(*value)
 
             # update min and max raw delay
