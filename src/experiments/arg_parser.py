@@ -6,7 +6,6 @@ import argparse
 import context
 from helpers import utils
 
-
 def verify_schemes(schemes):
     schemes = schemes.split()
     all_schemes = utils.parse_config()['schemes'].keys()
@@ -195,7 +194,6 @@ def parse_test_config(test_config, local, remote):
     defaults = {}
     defaults.update(**test_config)
     defaults['schemes'] = None
-    defaults['all'] = False
     defaults['flows'] = len(test_config['flows'])
     defaults['test_config'] = test_config
 

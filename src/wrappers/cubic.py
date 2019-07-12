@@ -13,13 +13,13 @@ def main():
         return
 
     if args.option == 'receiver':
-        cmd = ['iperf', '-Z', 'cubic', '-s', '-p', args.port]
+        cmd = ['iperf', '-Z', 'cubic', '-s', '-p', args.port, '-t', '120']
         check_call(cmd)
         return
 
     if args.option == 'sender':
         cmd = ['iperf', '-Z', 'cubic', '-c', args.ip, '-p', args.port,
-               '-t', '75']
+               '-t', '120']
         check_call(cmd)
         return
 

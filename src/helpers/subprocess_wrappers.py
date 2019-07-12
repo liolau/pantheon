@@ -16,19 +16,19 @@ def print_cmd(cmd):
 
 def call(cmd, **kwargs):
     print_cmd(cmd)
-    return subprocess.call(cmd, **kwargs)
+    return subprocess.call(cmd, stderr=sys.stdout, **kwargs)
 
 
 def check_call(cmd, **kwargs):
     print_cmd(cmd)
-    return subprocess.check_call(cmd, **kwargs)
+    return subprocess.check_call(cmd, stderr=sys.stdout, **kwargs)
 
 
 def check_output(cmd, **kwargs):
     print_cmd(cmd)
-    return subprocess.check_output(cmd, **kwargs)
+    return subprocess.check_output(cmd, stderr=sys.stdout, **kwargs)
 
 
 def Popen(cmd, **kwargs):
     print_cmd(cmd)
-    return subprocess.Popen(cmd, **kwargs)
+    return subprocess.Popen(cmd, stderr=sys.stdout, **kwargs)

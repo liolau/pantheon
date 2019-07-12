@@ -63,7 +63,7 @@ def main():
 
                 procs[tun_id] = Popen(cmd_to_run, stdin=PIPE,
                                       stdout=PIPE, preexec_fn=os.setsid)
-            elif cmd[2] == 'python':  # run python scripts inside tunnel
+            elif cmd[2] in ['python', 'mm-link', 'mm-loss', 'mm-delay', 'mm-onoff']:  # run python scripts inside tunnel
                 if tun_id not in procs:
                     sys.stderr.write(
                         'error: run tunnel client or server first\n')

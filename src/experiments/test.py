@@ -21,7 +21,9 @@ Flow = namedtuple('Flow', ['cc', # replace self.cc
                            'cc_src_local', # replace self.cc_src
                            'cc_src_remote', # replace self.r[cc_src]
                            'run_first', # replace self.run_first
-                           'run_second']) # replace self.run_second
+                           'run_second',  # replace self.run_second
+                           'mm_sender_cmd', #additional mahimahi command for sender (for unfairness)
+                           'mm_receiver_cmd']) #additional mahimahi command for receiver (for unfairness)
 
 
 class Test(object):
@@ -94,12 +96,19 @@ class Test(object):
                 local_p = path.join(context.src_dir, 'wrappers', cc + '.py')
                 remote_p = path.join(cc_src_remote_dir, 'wrappers', cc + '.py')
 
+                mm_sender_cmd = flow.get('mm_sender_cmd', '')
+                if mm_sender_cmd==None: mm_sender_cmd=''
+                mm_receiver_cmd = flow.get('mm_receiver_cmd', '')
+                if mm_receiver_cmd==None: mm_receiver_cmd=''
+
                 self.flow_objs[tun_id] = Flow(
                     cc=cc,
                     cc_src_local=local_p,
                     cc_src_remote=remote_p,
                     run_first=run_first,
-                    run_second=run_second)
+                    run_second=run_second,
+                    mm_sender_cmd = mm_sender_cmd,
+                    mm_receiver_cmd = mm_receiver_cmd)
                 tun_id += 1
 
     def setup_mm_cmd(self):
@@ -454,6 +463,9 @@ class Test(object):
             first_src = flow.cc_src_local
             second_src = flow.cc_src_local
 
+            mm_sender_cmd = flow.mm_sender_cmd
+            mm_receiver_cmd = flow.mm_receiver_cmd
+
             if flow.run_first == 'receiver':
                 if self.mode == 'remote':
                     if self.sender_side == 'local':
@@ -463,10 +475,10 @@ class Test(object):
 
                 port = utils.get_open_port()
 
-                first_cmd = 'tunnel %s python %s receiver %s\n' % (
-                    tun_id, first_src, port)
-                second_cmd = 'tunnel %s python %s sender %s %s\n' % (
-                    tun_id, second_src, recv_pri_ip, port)
+                first_cmd = 'tunnel %s %s python %s receiver %s\n' % (
+                    tun_id, mm_receiver_cmd, first_src, port)
+                second_cmd = 'tunnel %s %s python %s sender %s %s\n' % (
+                    tun_id, mm_sender_cmd, second_src, recv_pri_ip, port)
 
                 recv_manager.stdin.write(first_cmd)
                 recv_manager.stdin.flush()
@@ -479,10 +491,10 @@ class Test(object):
 
                 port = utils.get_open_port()
 
-                first_cmd = 'tunnel %s python %s sender %s\n' % (
-                    tun_id, first_src, port)
-                second_cmd = 'tunnel %s python %s receiver %s %s\n' % (
-                    tun_id, second_src, send_pri_ip, port)
+                first_cmd = 'tunnel %s %s python %s sender %s\n' % (
+                    tun_id, mm_sender_cmd, first_src, port)
+                second_cmd = 'tunnel %s %s python %s receiver %s %s\n' % (
+                    tun_id, mm_receiver_cmd, second_src, send_pri_ip, port)
 
                 send_manager.stdin.write(first_cmd)
                 send_manager.stdin.flush()
@@ -509,7 +521,7 @@ class Test(object):
                 recv_manager.stdin.flush()
             else:
                 assert(hasattr(self, 'flow_objs'))
-                flow = self.flow_objs[i]
+                flow = self.flow_objs[i+1]
                 if flow.run_first == 'receiver':
                     send_manager.stdin.write(second_cmd)
                     send_manager.stdin.flush()
@@ -517,12 +529,26 @@ class Test(object):
                     recv_manager.stdin.write(second_cmd)
                     recv_manager.stdin.flush()
 
+                
         elapsed_time = time.time() - start_time
         if elapsed_time > self.runtime:
             sys.stderr.write('Interval time between flows is too long')
             return False
+        
+        print_cc_memory = False
+        if print_cc_memory:
+            while(elapsed_time <= self.runtime):
+                elapsed_time = time.time() - start_time
+                for i in range(len(second_cmds)):
+                    p = tunid_to_proc[i+1]
+                    times = p.cpu_times()
+                    uss = p.memory_full_info().uss
+                    ctx = p.num_ctx_switches()
+                    print(i+1, uss, ctx)
+                time.sleep(1)
+        else:
+            time.sleep(self.runtime - elapsed_time) #previous way of waiting until experiment is done
 
-        time.sleep(self.runtime - elapsed_time)
         self.test_end_time = utils.utc_time()
 
         return True

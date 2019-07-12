@@ -1,6 +1,7 @@
 import os
 from os import path
 import sys
+import io
 import socket
 import signal
 import errno
@@ -8,10 +9,23 @@ import json
 import yaml
 import subprocess
 from datetime import datetime
-
 import context
+import contextlib
 from subprocess_wrappers import check_call, check_output, call
 
+@contextlib.contextmanager
+def nostdout(do_nothing=False):
+    if do_nothing:
+        yield
+        return
+    save_stdout = sys.stdout
+    save_stderr = sys.stderr
+    with open('stdout.txt', "w+") as log:
+        sys.stdout = log
+        sys.stderr = log
+        yield
+        sys.stdout = save_stdout
+        sys.stderr = save_stderr
 
 def get_open_port():
     sock = socket.socket(socket.AF_INET)
@@ -31,13 +45,13 @@ def make_sure_dir_exists(d):
             raise
 
 
-tmp_dir = path.join(context.base_dir, 'tmp')
+tmp_dir = path.join(context.base_dir, 'src/experiments/tmp_data/tmp')
 make_sure_dir_exists(tmp_dir)
 
 
 def parse_config():
     with open(path.join(context.src_dir, 'config.yml')) as config:
-        return yaml.load(config)
+        return yaml.safe_load(config)
 
 
 def update_submodules():
