@@ -12,7 +12,7 @@ import pandas as pd
 
 class Benchmark():
     def __init__(self, ramdisk = True, tmp_dir='./tmp_data', data_dir = './data', scheme='cubic', verbose=False):
-	check_output('python setup.py', shell=True) #loads all schemes after reboot
+	check_output('python %s'%os.path.join(context.src_dir, 'experiments/setup.py'), shell=True) #loads all schemes after reboot
         self.tmp_dir = tmp_dir
         self.data_dir = data_dir
         if ramdisk:
