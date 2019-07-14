@@ -115,6 +115,6 @@ class Benchmark():
 
 
 if __name__ == '__main__':
-    b = Benchmark(scheme='bbr', verbose=False)
+    b = Benchmark(scheme='bbr', verbose=True)
     b.run()
 
