@@ -2,12 +2,14 @@ import math
 from numpy.random import poisson
 import argparse
 import os
+from helpers import utils
 
 class Trace():
     def __init__(self, mbps = 8, distribution = 'constant', file_path = None, ms = 1000):
         self.mbps=mbps
         if file_path: self.file_path = file_path
         else:
+	    utils.make_sure_dir_exists('traces')
             self.file_path = 'traces/%dmbps_%s.trace'%(mbps, distribution)
             if not os.path.isfile(self.file_path):
                 self.generate_trace(mbps, distribution, trace_ms = ms, file_path = self.file_path)

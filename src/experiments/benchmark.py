@@ -12,11 +12,13 @@ import pandas as pd
 
 class Benchmark():
     def __init__(self, ramdisk = True, tmp_dir='./tmp_data', data_dir = './data', scheme='cubic', verbose=False):
+	check_output('python setup.py', shell=True) #loads all schemes after reboot
         self.tmp_dir = tmp_dir
         self.data_dir = data_dir
         if ramdisk:
+	    utils.make_sure_dir_exists(self.tmp_dir)
             res = check_output('df -T %s'%self.tmp_dir, shell=True)
-            if not 'tmpfs' in res: check_output('sudo mount -t tmpfs tmpfs %s' % self.tmp_dir, shell=True)
+            if not 'tmpfs' in res: check_output('sudo mount -t tmpfs -o size=300M tmpfs %s' % self.tmp_dir, shell=True)
             else: print('%s is already a ramdisk' %self.tmp_dir)
         self.scheme = scheme
         self.verbose = verbose

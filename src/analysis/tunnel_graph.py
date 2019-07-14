@@ -261,8 +261,9 @@ class TunnelGraph(object):
 
         self.total_percentile_delay = None
         if total_delays:
-            self.total_percentile_delay = np.percentile(
+        	self.total_percentile_delay = np.percentile(
                 total_delays, 95, interpolation='nearest')
+		self.mean_bottleneck_delay = np.mean(total_dealys)
 
         fairness_start_bin = self.ms_to_bin(max(first_departure.values()), first_ts)+1
         fairness_end_bin = self.ms_to_bin(min(last_arrival.values()), first_ts)-1
@@ -484,7 +485,7 @@ class TunnelGraph(object):
 
         tunnel_results = {}
         tunnel_results['throughput'] = self.total_avg_egress
-        tunnel_results['delay'] = self.total_percentile_delay
+        tunnel_results['95percentile_bottleneck_delay'] = self.total_percentile_delay
         tunnel_results['loss'] = self.total_loss_rate
         tunnel_results['duration'] = self.total_duration
         tunnel_results['stats'] = self.statistics_string()
@@ -494,6 +495,7 @@ class TunnelGraph(object):
         tunnel_results['overall_fairness'] = self.overall_fairness
         tunnel_results['group_interval_fairness'] = self.group_interval_fairness
         tunnel_results['group_overall_fairness'] = self.group_overall_fairness
+	tunnel_results['mean_bottleneck_delay'] = self.mean_bottleneck_delay
 
         flow_data = {}
         flow_data['all'] = {}
