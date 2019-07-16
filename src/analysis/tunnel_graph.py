@@ -263,7 +263,7 @@ class TunnelGraph(object):
         if total_delays:
         	self.total_percentile_delay = np.percentile(
                 total_delays, 95, interpolation='nearest')
-		self.mean_bottleneck_delay = np.mean(total_dealys)
+		self.mean_bottleneck_delay = np.mean(total_delays)
 
         fairness_start_bin = self.ms_to_bin(max(first_departure.values()), first_ts)+1
         fairness_end_bin = self.ms_to_bin(min(last_arrival.values()), first_ts)-1
@@ -354,7 +354,6 @@ class TunnelGraph(object):
                 label='Jain Fairness',
                 color='black')
 
-        print(self.group_fairnesses)
         ax2.plot(self.fairness_t, self.group_fairnesses,
                 label='group Jain Fairness',
                 color='0.8')
@@ -511,7 +510,7 @@ class TunnelGraph(object):
                 flow_data[flow_id]['tput'] = self.avg_egress[flow_id]
                 flow_data[flow_id]['delay'] = self.percentile_delay[flow_id]
                 flow_data[flow_id]['loss'] = self.loss_rate[flow_id]
-                group_id = self.flow_info[flowId]['group']
+                group_id = self.flow_info[flow_id]['group']
                 if not group_id in group_data:
                     group_data[group_id] = {k:0 for k in ['tput']}
                 group_data[group_id]['tput']+= self.avg_egress[flow_id]

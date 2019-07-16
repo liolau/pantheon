@@ -343,7 +343,7 @@ class Plot(object):
                     continue
 
                 tput = perf_data[cc][run_id]['throughput']
-                delay = perf_data[cc][run_id]['delay']
+                delay = perf_data[cc][run_id]['95percentile_bottleneck_delay']
                 if tput is None or delay is None:
                     continue
                 data_for_plot[cc].append((tput, delay))

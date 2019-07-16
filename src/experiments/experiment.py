@@ -119,6 +119,7 @@ class Experiment():
             os.remove(path)
 
         #3. move all remaining files (graphs) to persistent data folder
+	utils.make_sure_dir_exists(self.data_dir)
         for filename in os.listdir(self.tmp_dir):
             if not self.experiment_name in filename: continue
             path = os.path.join(self.tmp_dir, filename)
