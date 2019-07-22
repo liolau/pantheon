@@ -1,24 +1,14 @@
-# Pantheon of Congestion Control [![Build Status](https://travis-ci.org/StanfordSNR/pantheon.svg?branch=master)](https://travis-ci.org/StanfordSNR/pantheon)
-The Pantheon contains wrappers for many popular practical and research
-congestion control schemes. The Pantheon enables them to run on a common
-interface, and has tools to benchmark and compare their performances.
-Pantheon tests can be run locally over emulated links using
-[mahimahi](http://mahimahi.mit.edu/) or over the Internet to a remote machine.
+# Extended Pantheon for benchmarking congestion control schemes
 
-Our website is <https://pantheon.stanford.edu>, where you can find more
-information about Pantheon, including supported schemes, measurement results
-on a global [testbed](https://github.com/StanfordSNR/observatory)
-so far, and our paper at [USENIX ATC 2018](https://www.usenix.org/conference/atc18/presentation/yan-francis)
-(**Awarded Best Paper**).
-
-To discuss and talk about Pantheon-related topics and issues, feel free to
-post in the [Google Group](https://groups.google.com/forum/#!forum/pantheon-stanford)
-or send an email to `pantheon-stanford <at> googlegroups <dot> com`.
+This is an extended version of the Pantheon framework (<https://pantheon.stanford.edu>)
+intended for running full emulated benchmarks on congestion control schemes.
 
 ## Disclaimer
 This is research software. Our scripts will write to the file system in the
 `pantheon` folder. We never run third party programs as root, but we cannot
-guarantee they will never try to escalate privilege to root.
+guarantee they will never try to escalate privilege to root. In addition, with
+the ramdisk option enabled, the first run after a reboot will ask for root
+privileges for creating a ramdisk.
 
 You might want to install dependencies and run the setup on your own, because
 our handy scripts will install packages and perform some system-wide settings
@@ -65,72 +55,21 @@ src/experiments/setup.py [--setup] [--all | --schemes "<cc1> <cc2> ..."]
 ```
 
 to set up supported congestion control schemes. `--setup` is required
-to be run only once. In contrast, `src/experiments/setup.py` is
-required to be run on every reboot (without `--setup`).
+to be run only once.
 
-## Running the Pantheon
-To test schemes in emulated networks locally, run
-
-```
-src/experiments/test.py local (--all | --schemes "<cc1> <cc2> ...")
-```
-
-To test schemes over the Internet to remote machine, run
+## Running the Benchmark
+To bechnmark a scheme run
 
 ```
-src/experiments/test.py remote (--all | --schemes "<cc1> <cc2> ...") HOST:PANTHEON-DIR
+src/experiments/benchmark.py [scheme] (--verbose, --ramdisk=(true|false))
 ```
 
-Run `src/experiments/test.py local -h` and `src/experiments/test.py remote -h`
-for detailed usage and additional optional arguments, such as multiple flows,
-running time, arbitrary set of mahimahi shells for emulation tests,
-data sender side for real tests; use `--data-dir DIR` to specify an
-an output directory to save logs.
-
-## Pantheon analysis
-To analyze test results, run
+## Benchmark analysis
+To analyze benchmark, run
 
 ```
-src/analysis/analyze.py --data-dir DIR
+src/analysis/benchmark_analysis (--data_dir=[dir])
 ```
-
-It will analyze the logs saved by `src/experiments/test.py`, then generate
-performance figures and a full PDF report `pantheon_report.pdf`.
-
-## Running a single congestion control scheme
-All the available schemes can be found in `src/config.yml`. To run a single
-congestion control scheme, first follow the **Dependencies** section to install
-the required dependencies.
-
-At the first time of running, run `src/wrappers/<cc>.py setup`
-to perform the persistent setup across reboots, such as compilation,
-generating or downloading files to send, etc. Then run
-`src/wrappers/<cc>.py setup_after_reboot`, which also has to be run on every
-reboot. In fact, `test/setup.py` performs `setup_after_reboot` by
-default, and runs `setup` on schemes when `--setup` is given.
-
-Next, execute the following command to find the running order for a scheme:
-```
-src/wrappers/<cc>.py run_first
-```
-
-Depending on the output of `run_first`, run
-
-```
-# Receiver first
-src/wrappers/<cc>.py receiver port
-src/wrappers/<cc>.py sender IP port
-```
-
-or
-
-```
-# Sender first
-src/wrappers/<cc>.py sender port
-src/wrappers/<cc>.py receiver IP port
-```
-
-Run `src/wrappers/<cc>.py -h` for detailed usage.
 
 ## How to add your own congestion control
 Adding your own congestion control to Pantheon is easy! Just follow these
