@@ -21,6 +21,7 @@ class Experiment():
                      and optionally may specify
                     'sender_router':router to be used for this flow alone (in addition to bottleneck link) (default:None)
                     'count':the number of flows with these parameter to be created (default:1)
+		    'flow_info': dictionary containing 'color' (matplotlib color) and 'name' (string) for use in plots 
             router -- router for the bottleneck link
             
             Keyword Arguments:
