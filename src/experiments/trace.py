@@ -4,8 +4,18 @@ import argparse
 import os
 from helpers import utils
 
+"""Tool for generating mahimahi trace files. Can be used as a standalone commandline tool or from another python script."""
+
 class Trace():
+    """Abstract trace object. Generates traces if they do not already exist."""
     def __init__(self, mbps = 8, distribution = 'constant', file_path = None, ms = 1000):
+	"""
+	Arguments:
+		mbps -- float or integer, desired throughput
+		distribution -- 'constant' or 'poisson', depending on the distribution ot be used
+		file_path -- string, optional. If None, a combination of distribution and throughput will be used as default
+		ms -- int, maximum length of generated trace
+	"""
         self.mbps=mbps
         if file_path: self.file_path = file_path
         else:
