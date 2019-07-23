@@ -74,7 +74,7 @@ class Benchmark():
     def run(self):
         ex_identifiers = ['ex_name', 'run_id']
         ex_parameters = ['bottleneck_tput', 'q_size', 'scheme_a', 'scheme_b', 'rtprop_a', 'rtprop_b', 'runtime']
-        ex_results = ['loss', 'converged_fairness', 'time_to_max_fairness', 'delay', 'throughput', 'duration'] + ['throughput_rsd%d'%i for i in range(1, 7)]
+        ex_results = ['loss', 'interval_fairness', 'time_to_max_fairness', 'delay', 'throughput', 'duration'] + ['throughput_rsd%d'%i for i in range(1, 7)]
         results = pd.DataFrame(columns=ex_identifiers + ex_parameters + ex_results)
         for ex in self.solo + self.mixed:
 		print('running experiment %s' % ex.experiment_name)
@@ -118,6 +118,6 @@ class Benchmark():
 	    yield l[i:i + n]
 
 if __name__ == '__main__':
-    b = Benchmark(scheme='bbr', verbose=False)
+    b = Benchmark(scheme='vegas', verbose=False)
     b.run()
 

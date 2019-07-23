@@ -76,7 +76,7 @@ def setup_quic(cc_repo, cert_dir, html_dir):
     check_call(cmd, shell=True)
 
     # generate a html of size that can be transferred longer than 30s
-    generate_html(html_dir, 5 * 10**8)
+    generate_html(html_dir, 20 * 10**8)
 
 
 def main():

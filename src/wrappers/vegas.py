@@ -33,7 +33,7 @@ def main():
 
     if args.option == 'sender':
         cmd = ['iperf', '-Z', 'vegas', '-c', args.ip, '-p', args.port,
-               '-t', '75']
+               '-t', '120']
         check_call(cmd)
         return
 
