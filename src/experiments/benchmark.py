@@ -10,9 +10,10 @@ import itertools
 import traceback
 import pandas as pd
 from multiprocessing import Process, Lock
+import arg_parser
 
 class Benchmark():
-    def __init__(self, ramdisk = True, tmp_dir='./tmp_data', data_dir = './data', scheme='cubic', verbose=False):
+    def __init__(self, scheme, ramdisk = True, tmp_dir='./tmp_data', data_dir = './data', verbose=False):
 	check_output('python %s --schemes %s'%(os.path.join(context.src_dir, 'experiments/setup.py'), scheme), shell=True) #loads all schemes after reboot
         self.tmp_dir = tmp_dir
         self.data_dir = data_dir
@@ -118,6 +119,9 @@ class Benchmark():
 	    yield l[i:i + n]
 
 if __name__ == '__main__':
-    b = Benchmark(scheme='copa', verbose=False)
-    b.run()
+	default_data_dir = os.path.join(context.src_dir, 'experiments/data')
+	default_tmp_dir = os.path.join(context.src_dir, 'experiments/tmp_data')
+	args = arg_parser.parse_benchmark(default_data_dir, default_tmp_dir)
+	b = Benchmark(args.scheme, ramdisk = not args.no_ramdisk, tmp_dir = args.tmp_dir, data_dir = args.data_dir, verbose = args.verbose)
+	b.run()
 
