@@ -20,10 +20,12 @@ def nostdout(do_nothing=False):
         return
     save_stdout = sys.stdout
     save_stderr = sys.stderr
-    with open('stdout.txt', "w+") as log:
+    log = open('stdout.txt', "w+")
+    try:
         sys.stdout = log
         sys.stderr = log
         yield
+    finally:
         sys.stdout = save_stdout
         sys.stderr = save_stderr
 
