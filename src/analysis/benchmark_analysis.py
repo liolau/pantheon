@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import os
 from numpy.linalg import lstsq
 import numpy as np
+from arg_parser import parse_benchmark_analysis
+import context
+
 class BenchmarkAnalysis():
 	def __init__(self, data_dir):
 		self.data_dir = data_dir
@@ -76,4 +79,6 @@ class BenchmarkAnalysis():
 
 
 if __name__=='__main__':
-	BenchmarkAnalysis('../experiments/data').run()
+	default_data_dir = os.path.join(context.src_dir, 'experiments/data')
+	args = parse_benchmark_analysis(default_data_dir)
+	BenchmarkAnalysis(args.data_dir).run()
