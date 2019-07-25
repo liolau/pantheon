@@ -118,6 +118,6 @@ class Benchmark():
 	    yield l[i:i + n]
 
 if __name__ == '__main__':
-    b = Benchmark(scheme='vegas', verbose=False)
+    b = Benchmark(scheme='copa', verbose=False)
     b.run()
 

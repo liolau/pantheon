@@ -128,7 +128,10 @@ class Experiment():
             shutil.move(path, new_path)
 
         if kill_9_iperf:
-            check_output('pkill -9 iperf', shell=True)
+	    try:
+                check_output('pkill -9 iperf', shell=True)
+	    except:
+		pass
 
         
 
