@@ -13,17 +13,24 @@ class BenchmarkAnalysis():
 		self.data = pd.read_csv(self.csv_path)
 
 	def run(self):
-		self.plot_loss()
-		self.plot_fair()
-		self.plot_fair_total()
-		self.plot_variance()
+		solo = self.data.query('scheme_a==scheme_b')
+		self.plot_loss(			'Lossrate vs Queue Size', 						'loss.png', 			solo)
+		self.plot_variance(		'Relative Standard Deviation vs Queue Size', 	'rsd.png', 				solo)
+		self.plot_fair(			'Jain Fairness vs RTT Unfairness', 				'fairness.png', 		solo)
+		self.plot_fair_total(	'Jain Fairness (total) vs RTT Unfairness', 		'fairness_total.png',	solo)
+
+		mixed = self.data.query('scheme_a!=scheme_b')
+		if len(mixed)==0: return #in case of cubic
+		self.plot_loss(			'Lossrate vs Queue Size (mixed flows)', 					'loss_mixed.png',			mixed)
+		self.plot_variance(		'Relative Standard Deviation vs Queue Size (mixed flows)', 	'rsd_mixed.png',			mixed)
+		self.plot_fair(			'Jain Fairness vs RTT Unfairness (mixed flows)', 			'fairness_mixed.png',		mixed)
+		self.plot_fair_total(	'Jain Fairness (total) vs RTT Unfairness (mixed flows)', 	'fairness_total_mixed.png',	mixed)
 
 	
-	def plot_loss(self):
+	def plot_loss(self, title, filename, data):
 		fig, ax = plt.subplots()
-		fig.suptitle('Lossrate vs Queue Size')
-		filtered = self.data.query('scheme_a==scheme_b')
-		filtered = filtered.query('rtprop_a==rtprop_b')
+		fig.suptitle(title)
+		filtered = data.query('rtprop_a==rtprop_b')
 		grouped = filtered.groupby(['rtprop_a', 'bottleneck_rtprop'])
 		for k, v in dict(list(grouped)).items():
 			v = v.sort_values('q_size')
@@ -31,13 +38,12 @@ class BenchmarkAnalysis():
 		ax.set_xlabel('Queue Size (bytes)')
 		ax.set_ylabel('Loss Rate (fraction)')
 		plt.legend()
-		plt.savefig(os.path.join(self.data_dir, 'loss.png'))
+		plt.savefig(os.path.join(self.data_dir, filename))
 
-	def plot_variance(self):
+	def plot_variance(self, title, filename, data):
 		fig, ax = plt.subplots()
-		fig.suptitle('Relative Standard Deviation vs Queue Size')
-		filtered = self.data.query('scheme_a==scheme_b')
-		filtered = filtered.query('rtprop_a==rtprop_b')
+		fig.suptitle(title)
+		filtered = data.query('rtprop_a==rtprop_b')
 		grouped = filtered.groupby(['rtprop_a', 'bottleneck_rtprop'])
 		for k, v in dict(list(grouped)).items():
 			v = v.sort_values('q_size')
@@ -45,14 +51,13 @@ class BenchmarkAnalysis():
 		ax.set_xlabel('Queue Size (bytes)')
 		ax.set_ylabel('Relative Standard Deviation of Throughput')
 		plt.legend()
-		plt.savefig(os.path.join(self.data_dir, 'rsd.png'))
+		plt.savefig(os.path.join(self.data_dir, filename))
 	
-	def plot_fair(self):
+	def plot_fair(self, title, filename, data):
 		fig, ax = plt.subplots()
-		fig.suptitle('Jain Fairness vs RTT Unfairness')
-		filtered = self.data.query('scheme_a==scheme_b')
-		x_data = abs(filtered['rtprop_a'] - filtered['rtprop_b'])
-		y_data = filtered['interval_fairness']
+		fig.suptitle(title)
+		x_data = abs(data['rtprop_a'] - data['rtprop_b'])
+		y_data = data['interval_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
 		A = np.vstack([x_data, np.ones(len(x_data))]).T
 		m, c = lstsq(A, y_data, rcond=None)[0]
@@ -60,14 +65,13 @@ class BenchmarkAnalysis():
 		ax.set_xlabel('RTT Unfairness (ms)')
 		ax.set_ylabel('Jain Fairness')
 		plt.legend()
-		plt.savefig(os.path.join(self.data_dir, 'fairness.png'))
+		plt.savefig(os.path.join(self.data_dir, filename))
 
-	def plot_fair_total(self):
+	def plot_fair_total(self, title, filename, data):
 		fig, ax = plt.subplots()
-		fig.suptitle('Jain Fairness (total) vs RTT Unfairness')
-		filtered = self.data.query('scheme_a==scheme_b')
-		x_data = abs(filtered['rtprop_a'] - filtered['rtprop_b'])
-		y_data = filtered['overall_fairness']
+		fig.suptitle(title)
+		x_data = abs(data['rtprop_a'] - data['rtprop_b'])
+		y_data = data['overall_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
 		A = np.vstack([x_data, np.ones(len(x_data))]).T
 		m, c = lstsq(A, y_data, rcond=None)[0]
@@ -75,7 +79,7 @@ class BenchmarkAnalysis():
 		ax.set_xlabel('RTT Unfairness (ms)')
 		ax.set_ylabel('Jain Fairness (total)')
 		plt.legend()
-		plt.savefig(os.path.join(self.data_dir, 'fairness_total.png'))
+		plt.savefig(os.path.join(self.data_dir, filename))
 
 
 if __name__=='__main__':
