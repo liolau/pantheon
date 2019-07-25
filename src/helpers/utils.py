@@ -20,7 +20,7 @@ def nostdout(do_nothing=False):
         return
     save_stdout = sys.stdout
     save_stderr = sys.stderr
-    log = open('stdout.txt', "w+")
+    log = open(os.path.join(context.src_dir, 'experiments/stdout.txt'), "w+")
     try:
         sys.stdout = log
         sys.stderr = log

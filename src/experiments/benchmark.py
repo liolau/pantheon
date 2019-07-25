@@ -109,7 +109,7 @@ class Benchmark():
 
 					ex.cleanup_files()
 			except Exception:
-				with open('exceptions.txt', 'a+') as log:
+				with open(os.path.join(context.src_dir, 'experiments/exceptions.txt'), 'a+') as log:
 					traceback.print_exc(file=log)
 				continue
 
