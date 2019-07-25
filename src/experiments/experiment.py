@@ -88,6 +88,7 @@ class Experiment():
 
     def run(self):
         """Run experiment""" 
+	print(self.tmp_dir)
         run_tests(self.args_tuple)
 
     def plot(self):

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from experiment import Experiment
 import os
 from helpers.subprocess_wrappers import check_output
@@ -10,9 +12,10 @@ import itertools
 import traceback
 import pandas as pd
 from multiprocessing import Process, Lock
+import arg_parser
 
 class Benchmark():
-	def __init__(self, ramdisk = True, tmp_dir='./tmp_data', data_dir = './data', scheme='cubic', verbose=False):
+	def __init__(self, scheme, ramdisk = True, tmp_dir='./tmp_data', data_dir = './data', verbose=False):
 		check_output('python %s --schemes %s'%(os.path.join(context.src_dir, 'experiments/setup.py'), scheme), shell=True) #loads all schemes after reboot
 		self.tmp_dir = tmp_dir
 		self.data_dir = data_dir
@@ -81,7 +84,6 @@ class Benchmark():
 			try:
 				with utils.nostdout(do_nothing=self.verbose):
 					ex.run()
-					print("plt")
 					ex_results = ex.plot()
 					for run_id, res in ex_results.items():
 						res.pop('stats')
