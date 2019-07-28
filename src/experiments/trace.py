@@ -3,6 +3,7 @@ from numpy.random import poisson
 import argparse
 import os
 from helpers import utils
+import context
 
 """Tool for generating mahimahi trace files. Can be used as a standalone commandline tool or from another python script."""
 
@@ -19,10 +20,11 @@ class Trace():
         self.mbps=mbps
         if file_path: self.file_path = file_path
         else:
-	    utils.make_sure_dir_exists('traces')
-            self.file_path = 'traces/%dmbps_%s.trace'%(mbps, distribution)
-            if not os.path.isfile(self.file_path):
-                self.generate_trace(mbps, distribution, trace_ms = ms, file_path = self.file_path)
+			trace_dir=os.path.join(context.src_dir, 'experiments/traces')
+	    	utils.make_sure_dir_exists(trace_dir)
+        	self.file_path = '%s/%dmbps_%s.trace'%(trace_dir, mbps, distribution)
+        	if not os.path.isfile(self.file_path):
+        		self.generate_trace(mbps, distribution, trace_ms = ms, file_path = self.file_path)
 
     def generate_constant_trace(self, mbps, max_trace_ms = 1000):
         mtu_per_ms = mbps/12.0 #Mbps/8/1500*1000
