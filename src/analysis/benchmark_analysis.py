@@ -69,7 +69,7 @@ class BenchmarkAnalysis():
 		x_data = abs(data['rtprop_a'] - data['rtprop_b'])
 		y_data = data['interval_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
-		m, c = linear_regression(x_data, y_data)
+		m, c = self.linear_regression(x_data, y_data)
 		plt.plot(x_data, m*x_data + c, 'r', label='Linear Regression')
 		ax.set_xlabel('RTT Unfairness (ms)')
 		ax.set_ylabel('Jain Fairness')
@@ -82,7 +82,7 @@ class BenchmarkAnalysis():
 		x_data = abs(data['rtprop_a'] - data['rtprop_b'])
 		y_data = data['overall_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
-		m, c = linear_regression(x_data, y_data)
+		m, c = self.linear_regression(x_data, y_data)
 		plt.plot(x_data, m*x_data + c, 'r', label='Linear Regression')
 		ax.set_xlabel('RTT Unfairness (ms)')
 		ax.set_ylabel('Jain Fairness (total)')
@@ -96,7 +96,7 @@ class BenchmarkAnalysis():
 		x_data = data['overall_fairness']
 		y_data = data['time_to_max_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
-		m, c = linear_regression(x_data, y_data)
+		m, c = self.linear_regression(x_data, y_data)
 		plt.plot(x_data, m*x_data + c, 'r', label='Linear Regression')
 		ax.set_xlabel('Total Jain Fairness')
 		ax.set_ylabel('Time to max Fairness (s)')
