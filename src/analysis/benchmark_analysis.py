@@ -69,8 +69,7 @@ class BenchmarkAnalysis():
 		x_data = abs(data['rtprop_a'] - data['rtprop_b'])
 		y_data = data['interval_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
-		A = np.vstack([x_data, np.ones(len(x_data))]).T
-		m, c = lstsq(A, y_data, rcond=None)[0]
+		m, c = linear_regression(x_data, y_data)
 		plt.plot(x_data, m*x_data + c, 'r', label='Linear Regression')
 		ax.set_xlabel('RTT Unfairness (ms)')
 		ax.set_ylabel('Jain Fairness')
@@ -83,13 +82,13 @@ class BenchmarkAnalysis():
 		x_data = abs(data['rtprop_a'] - data['rtprop_b'])
 		y_data = data['overall_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
-		A = np.vstack([x_data, np.ones(len(x_data))]).T
-		m, c = lstsq(A, y_data, rcond=None)[0]
+		m, c = linear_regression(x_data, y_data)
 		plt.plot(x_data, m*x_data + c, 'r', label='Linear Regression')
 		ax.set_xlabel('RTT Unfairness (ms)')
 		ax.set_ylabel('Jain Fairness (total)')
 		plt.legend()
 		plt.savefig(os.path.join(self.data_dir, filename))
+		return np.mean(y_data), m
 
 	def plot_time_to_convergence(self, title, filename, data):
 		fig, ax = plt.subplots()
@@ -97,8 +96,7 @@ class BenchmarkAnalysis():
 		x_data = data['overall_fairness']
 		y_data = data['time_to_max_fairness']
 		plt.plot(x_data, y_data, '.', alpha=0.3, label='Experiment Results')
-		A = np.vstack([x_data, np.ones(len(x_data))]).T
-		m, c = lstsq(A, y_data, rcond=None)[0]
+		m, c = linear_regression(x_data, y_data)
 		plt.plot(x_data, m*x_data + c, 'r', label='Linear Regression')
 		ax.set_xlabel('Total Jain Fairness')
 		ax.set_ylabel('Time to max Fairness (s)')
@@ -137,6 +135,11 @@ class BenchmarkAnalysis():
 		ax.set_ylabel('Throughput (Mbit)')
 		plt.legend()
 		plt.savefig(os.path.join(self.data_dir, filename))
+
+	def linear_regression(self, x_data, y_data):
+		A = np.vstack([x_data, np.ones(len(x_data))]).T
+		m, c = lstsq(A, y_data, rcond=None)[0]
+		return m, c
 
 
 if __name__=='__main__':
