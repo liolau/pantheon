@@ -69,7 +69,7 @@ class Benchmark():
 		routers = {}
 		current_queue_size = int(bdp_bytes)
 		for i in range(num_routers):
-			r = Router(delay=delay, up_trace=Trace(mbps=mbps), up_queue_type='droptail', up_queue_args = 'bytes=%d'%int(current_queue_size))
+			r = Router(delay=delay, up_trace=Trace(mbps=mbps), up_queue_type='droptail', up_queue_args = 'bytes=%d'%int(current_queue_size), down_trace=Trace(mbps=mbps))
 			routers[int(current_queue_size)] = r
 			current_queue_size *= math.pow(range_factor, step_size)
 		return routers
