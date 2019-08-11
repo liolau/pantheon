@@ -289,7 +289,7 @@ class TunnelGraph(object):
 
 		self.fairness_t = [self.bin_to_s(b+1) for b in self.fairness_binIds]
 		t = self.bin_to_s(fairness_end_bin+1)-self.bin_to_s(fairness_start_bin)
-		self.converged_group_tputs = {k:(v/t) for k, v in group_totals.items()}
+		self.converged_group_tputs = {k:(v/t/1_000_000.0) for k, v in group_totals.items()}
 		self.converged_tput = sum(self.converged_group_tputs.values())
 		
 		max_fairness_bin = self.fairnesses.index(max(self.fairnesses))
