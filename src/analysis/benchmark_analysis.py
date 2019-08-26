@@ -23,6 +23,7 @@ class BenchmarkAnalysis():
 		self.plot_fair_total(	'Jain Fairness (total) vs RTT Unfairness' + scheme_str, 			'fairness_total.pdf',	solo)
 		self.plot_time_to_convergence('Convergence Time vs Fairness after Convergence' + scheme_str,'convergence.pdf',		solo)
 		self.plot_queueing_delay('Queuing Delay vs Queue Capacity' + scheme_str,					'delay.pdf',			solo)
+		self.plot_throughput(	'Throughput vs Queue Capacity' + scheme_str,						'throughput.pdf',		solo)
 
 		mixed = self.data.query('scheme_a!=scheme_b')
 		if len(mixed)==0: return #in case of cubic
@@ -35,7 +36,7 @@ class BenchmarkAnalysis():
 		self.plot_fair_total(	'Jain Fairness (total) vs RTT Unfairness' + scheme_str, 			'fairness_total_mixed.pdf',	mixed)
 		self.plot_time_to_convergence('Convergence Time vs Fairness after Convergence' + scheme_str,'convergence_mixed.pdf',	mixed)
 		self.plot_queueing_delay('Queuing Delay vs Queue Capacity' + scheme_str,			 		'delay_mixed.pdf',			mixed)
-		self.plot_throughput(	'Throughput vs Queue Capacity' + scheme_str,						'throughput_mixed.pdf',		mixed)
+		self.plot_throughput_mixed(	'Throughput vs Queue Capacity' + scheme_str,					'throughput_mixed.pdf',		mixed)
 	
 	def plot_loss(self, title, filename, data):
 		fig, ax = plt.subplots()
@@ -119,7 +120,7 @@ class BenchmarkAnalysis():
 		plt.legend()
 		plt.savefig(os.path.join(self.data_dir, filename))
 
-	def plot_throughput(self, title, filename, data):
+	def plot_throughput_mixed(self, title, filename, data):
 		fig, ax = plt.subplots()
 		fig.suptitle(title)
 		filtered = data.query('rtprop_a==rtprop_b')
@@ -131,6 +132,28 @@ class BenchmarkAnalysis():
 			plt.semilogx(v['q_size'], v['scheme_a_tput'],label='%s %dms RTT'%(v['scheme_a'].values[0], k[0] + k[1]), color=colors[color_id])
 			plt.semilogx(v['q_size'], v['scheme_b_tput'], '--', label='%s %dms RTT'%(v['scheme_b'].values[0], k[0] + k[1]), color=colors[color_id])
 			color_id += 1
+			q_sizes = v['q_size']
+			tputs = v['bottleneck_tput']
+		plt.semilogx(q_sizes, tputs/2.0, label='Fair share', color='black')
+		ax.set_xlabel('Queue Capacity (bytes)')
+		ax.set_ylabel('Throughput (Mbit)')
+		plt.legend()
+		plt.savefig(os.path.join(self.data_dir, filename))
+
+	def plot_throughput(self, title, filename, data):
+		fig, ax = plt.subplots()
+		fig.suptitle(title)
+		filtered = data.query('rtprop_a==rtprop_b')
+		grouped = filtered.groupby(['rtprop_a', 'bottleneck_rtprop'])
+		colors = list("rgbcym")
+		color_id = 0
+		for k, v in dict(list(grouped)).items():
+			v = v.sort_values('q_size')
+			plt.semilogx(v['q_size'], v['throughput'],label='%s %dms RTT'%(v['scheme_a'].values[0], k[0] + k[1]), color=colors[color_id])
+			color_id += 1
+			q_sizes = v['q_size']
+			tputs = v['bottleneck_tput']
+		plt.semilogx(q_sizes, tputs, label='Bottleneck capacity', color='black')
 		ax.set_xlabel('Queue Capacity (bytes)')
 		ax.set_ylabel('Throughput (Mbit)')
 		plt.legend()

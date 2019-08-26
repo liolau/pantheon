@@ -16,6 +16,9 @@ def plot_multischeme_summary(data_dirs, output_dir):
 	plt.figure(2)
 	fig2, ax2 = plt.subplots(num=2)
 	fig2.suptitle('Loss and Queue Size')
+	plt.figure(3)
+	fig3, ax3 = plt.subplots(num=3)
+	fig3.suptitle('Throughput')
 	colors = list('rgbcmy')
 	for scheme_id, data_dir in enumerate(data_dirs):
 		csv_path = os.path.join(data_dir, 'results.csv')
@@ -35,6 +38,10 @@ def plot_multischeme_summary(data_dirs, output_dir):
 			plt.plot(rtt_corr, fairness, 'o' if k=='' else 'x', label='%s %s'%(scheme, k), color=colors[scheme_id%len(colors)])
 			plt.figure(2)
 			plt.plot(q_fraction, loss, 'o' if k=='' else 'x', label='%s %s'%(scheme, k), color=colors[scheme_id%len(colors)])
+		throughput = np.mean(solo['throughput'])
+		capacity = np.mean(solo['bottleneck_tput'])
+		plt.figure(3)
+		plt.plot(throughput/capacity, 0, 'o', label=scheme, color=colors[scheme_id%len(colors)])
 	
 	plt.figure(1)
 	ax1.set_xlabel('Correlation coefficient of RTT unfairness and Fairness')
@@ -48,6 +55,11 @@ def plot_multischeme_summary(data_dirs, output_dir):
 	plt.legend()
 	plt.savefig(os.path.join(output_dir, 'queue_loss.pdf'))
 
+	plt.figure(3)
+	ax3.set_xlabel('Fraction of throughput capacity used')
+	ax3.set_yticks([], [])
+	plt.legend()
+	plt.savefig(os.path.join(output_dir, 'throughput.pdf'))
 
 if __name__=='__main__':
 	np.seterr(all='raise')
