@@ -8,11 +8,24 @@ from helpers import utils
 
 def parse_benchmark(default_data_dir, default_tmp_dir):
 	parser = argparse.ArgumentParser(description='Run full emulated benchmark')
-	parser.add_argument('scheme', type=str, help='name of scheme to benchmark, see config.yml for a list of supported schemes')
-	parser.add_argument('--data_dir', type=str, default=default_data_dir, help='specify data dir (if not default)')
+	#parser.add_argument('scheme', type=str, help='name of scheme to benchmark, see config.yml for a list of supported schemes')
+        #for running multiple each with different scheme
+        #parser.add_argument('-l', '--schemelist', help='delimited CC list input', type=lambda s: [str(item) for item in s.split(',')])
+        parser.add_argument('scheme_a', type=str, help='name of 1st flow scheme, see config.yml for a list of supported schemes')
+        parser.add_argument('scheme_b', type=str, help='name of 2nd flow scheme, see config.yml for a list of supported schemes')
+        #parser.add_argument('scheme_c', type=str, help='name of 3rd flow scheme, see config.yml for a list of supported schemes')
+        #parser.add_argument('scheme_d', type=str, help='name of 4th flow scheme, see config.yml for a list of supported schemes')
+        parser.add_argument('--data_dir', type=str, default=default_data_dir, help='specify data dir (if not default)')
 	parser.add_argument('--tmp_dir', type=str, default=default_tmp_dir, help='specify tmp dir (if not default)')
 	parser.add_argument('--verbose', action='store_true', default=False, help='enable full logging')
 	parser.add_argument('--no_ramdisk', action='store_true', default=False, help='do not make tmp_dir a ramkdisk')
+        parser.add_argument('runs', type=int, default=1, help='number of times to repeat experiment')
+        parser.add_argument('runtime', type=int, default=90, help='enter runtime of each flow')
+        parser.add_argument('delay_range', type=int, default=100, help='enter maximum delay option')
+        #parser.add_argument('delay_step', type=int, default=25, help='enter stp size for delay')
+        #for _, value in parser.parse_args()._get_kwargs():
+         #   if value is not None:
+          #      print(value)
 	return parser.parse_args()
 
 def verify_schemes(schemes):
